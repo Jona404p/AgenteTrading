@@ -1,0 +1,16 @@
+.env
+data/raw/*
+data/processed/*
+data/sentiment/*
+!data/**/.gitkeep
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+data/models/*
+!data/models/.gitkeep
+data/risk/*
+!data/risk/.gitkeep
+data/execution/
+data/live/*
+!data/live/.gitkeep

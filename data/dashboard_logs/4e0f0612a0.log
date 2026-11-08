@@ -1,0 +1,38 @@
+2026-10-11 00:47:56 | WARNING  | src.data.exchange_factory | Cliente de trading en BINANCE TESTNET (spot)
+[testnet] BTC/USDT último precio: 83195.04
+Traceback (most recent call last):
+  File "/home/jona/Documentos/AgentTrad/trading_agent/scripts/check_connection.py", line 32, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/home/jona/Documentos/AgentTrad/trading_agent/scripts/check_connection.py", line 22, in main
+    bal = await ex.fetch_balance()
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jona/Documentos/AgentTrad/trading_agent/.venv/lib/python3.13/site-packages/ccxt/async_support/binance.py", line 4119, in fetch_balance
+    response = await self.privateGetAccount(self.extend(request, query))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jona/Documentos/AgentTrad/trading_agent/.venv/lib/python3.13/site-packages/ccxt/async_support/binance.py", line 12650, in request
+    response = await self.fetch2(path, api, method, params, headers, body, config)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jona/Documentos/AgentTrad/trading_agent/.venv/lib/python3.13/site-packages/ccxt/async_support/base/exchange.py", line 1038, in fetch2
+    raise e
+  File "/home/jona/Documentos/AgentTrad/trading_agent/.venv/lib/python3.13/site-packages/ccxt/async_support/base/exchange.py", line 1019, in fetch2
+    response = await self.fetch(request['url'], request['method'], request['headers'], request['body'])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jona/Documentos/AgentTrad/trading_agent/.venv/lib/python3.13/site-packages/ccxt/async_support/base/exchange.py", line 290, in fetch
+    self.handle_errors(http_status_code, http_status_text, url, method, headers, http_response, json_response, request_headers, request_body)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jona/Documentos/AgentTrad/trading_agent/.venv/lib/python3.13/site-packages/ccxt/async_support/binance.py", line 12617, in handle_errors
+    self.throw_exactly_matched_exception(self.exceptions['exact'], error, feedback)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jona/Documentos/AgentTrad/trading_agent/.venv/lib/python3.13/site-packages/ccxt/base/exchange.py", line 6225, in throw_exactly_matched_exception
+    raise exact[string](message)
+ccxt.base.errors.AuthenticationError: binance {"code":-2015,"msg":"Invalid API-key, IP, or permissions for action."}

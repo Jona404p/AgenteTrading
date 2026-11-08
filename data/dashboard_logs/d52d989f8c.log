@@ -1,0 +1,4 @@
+2026-10-11 00:51:37 | WARNING  | src.data.exchange_factory | Cliente de trading en BINANCE TESTNET (spot)
+[testnet] BTC/USDT último precio: 83192.32
+ERROR de autenticación al consultar balance (-2015 suele indicar API key inválida, entorno incorrecto, IP no autorizada o permisos insuficientes).
+Comprueba que la key y el secret correspondan a BINANCE_ENV=testnet, que tengan permiso de lectura de cuenta para spot, y que la IP actual esté permitida si activaste la lista blanca. Las credenciales de Testnet y producción son distintas. No compartas ni pegues tus claves.

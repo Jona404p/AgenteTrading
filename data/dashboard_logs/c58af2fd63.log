@@ -1,0 +1,44 @@
+2026-10-11 00:22:43 | INFO     | src.rl.training | Split: train: 8365 velas [2023-01-03 → 2023-12-17] | val: 1785 velas [2023-12-17 → 2024-03-01] | test: 1785 velas [2024-03-01 → 2024-05-14]
+/home/jona/Documentos/AgentTrad/trading_agent/.venv/lib/python3.13/site-packages/torch/cuda/__init__.py:228: UserWarning: CUDA initialization: The NVIDIA driver on your system is too old (found version 12040). Please update your GPU driver by downloading and installing a new version from the URL: http://www.nvidia.com/Download/index.aspx Alternatively, go to: https://pytorch.org to install a PyTorch version that has been compiled with your version of the CUDA driver. (Triggered internally at /__w/pytorch/pytorch/c10/cuda/CUDAFunctions.cpp:119.)
+  return torch._C._cuda_getDeviceCount() > 0
+2026-10-11 00:22:46 | INFO     | src.rl.training | [val] t=2000 sharpe=0.00 ret=0.00% dd=0.00% trades=0
+2026-10-11 00:22:47 | INFO     | src.rl.training | [val] t=4000 sharpe=0.00 ret=0.00% dd=0.00% trades=0
+2026-10-11 00:22:48 | INFO     | src.rl.training | [val] t=6000 sharpe=-6.72 ret=-2.27% dd=-2.84% trades=223
+2026-10-11 00:22:49 | INFO     | src.rl.training | [val] t=8000 sharpe=-6.72 ret=-2.27% dd=-2.84% trades=223
+2026-10-11 00:22:49 | INFO     | src.rl.training | [val] t=10000 sharpe=-6.91 ret=-3.59% dd=-3.92% trades=310
+2026-10-11 00:22:50 | INFO     | src.rl.training | [val] t=12000 sharpe=-6.91 ret=-3.59% dd=-3.92% trades=310
+2026-10-11 00:22:51 | INFO     | src.rl.training | [val] t=14000 sharpe=-3.80 ret=-2.77% dd=-3.34% trades=434
+2026-10-11 00:22:52 | INFO     | src.rl.training | [val] t=16000 sharpe=-3.80 ret=-2.77% dd=-3.34% trades=434
+2026-10-11 00:22:53 | INFO     | src.rl.training | [val] t=18000 sharpe=-1.30 ret=-1.23% dd=-3.68% trades=444
+2026-10-11 00:22:53 | INFO     | src.rl.training | [val] t=20000 sharpe=-1.30 ret=-1.23% dd=-3.68% trades=444
+
+Modelo guardado en: /home/jona/Documentos/AgentTrad/trading_agent/data/models/SYNTHUSDT_1h_ppo_20261011_062243
+train: 8365 velas [2023-01-03 → 2023-12-17] | val: 1785 velas [2023-12-17 → 2024-03-01] | test: 1785 velas [2024-03-01 → 2024-05-14]
+
+== VALIDACIÓN ==
+      total_return: 0.0000
+              cagr: 0.0000
+            sharpe: 0.0000
+           sortino: 0.0000
+      max_drawdown: 0.0000
+            calmar: 0.0000
+         fees_paid: 0.0000
+          n_trades: 0
+          turnover: 0.0000
+              bars: 1778
+   buy_hold_return: 1.1813
+     excess_return: -1.1813
+
+== TEST (fuera de muestra) ==
+      total_return: 0.0000
+              cagr: 0.0000
+            sharpe: 0.0000
+           sortino: 0.0000
+      max_drawdown: 0.0000
+            calmar: 0.0000
+         fees_paid: 0.0000
+          n_trades: 0
+          turnover: 0.0000
+              bars: 1778
+   buy_hold_return: -0.3155
+     excess_return: 0.3155

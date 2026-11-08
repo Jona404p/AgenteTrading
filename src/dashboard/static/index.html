@@ -1,0 +1,733 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trading Agent · Panel</title>
+<style>
+:root{
+  --bg:#f5f6f8; --card:#fff; --card2:#f0f2f5; --ink:#161a22; --muted:#5b6575; --line:#dde1e8;
+  --accent:#2563eb; --good:#15803d; --bad:#c62828; --warn:#b45309; --info:#0e7490;
+  --good-bg:#e3f4e8; --bad-bg:#fbe4e4; --warn-bg:#fdf0d9; --info-bg:#def3f8; --grid:#e8ebf0;
+  --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.04);
+}
+:root[data-theme="dark"]{
+  --bg:#0f1218; --card:#171c25; --card2:#1d2330; --ink:#e7eaf0; --muted:#97a1b3; --line:#2a3242;
+  --accent:#6ea0ff; --good:#4ade80; --bad:#ff7b7b; --warn:#fbbf24; --info:#5ed0e8;
+  --good-bg:#15301f; --bad-bg:#3a1b1d; --warn-bg:#3a2d12; --info-bg:#12303a; --grid:#232a38;
+  --shadow:none;
+}
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+a.skip{position:absolute;left:-999px;top:0;background:var(--accent);color:#fff;padding:8px 12px;z-index:100}
+a.skip:focus{left:8px;top:8px}
+header.top{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;padding:10px 18px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+header h1{font-size:16px;margin:0;display:flex;align-items:center;gap:8px;letter-spacing:.2px}
+header .sp{flex:1}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:650;border:1px solid transparent;white-space:nowrap}
+.badge.good{background:var(--good-bg);color:var(--good)} .badge.bad{background:var(--bad-bg);color:var(--bad)}
+.badge.warn{background:var(--warn-bg);color:var(--warn)} .badge.info{background:var(--info-bg);color:var(--info)}
+.badge.mute{background:var(--card2);color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--muted);display:inline-block;flex:none}
+.dot.good{background:var(--good)} .dot.bad{background:var(--bad)} .dot.warn{background:var(--warn)} .dot.info{background:var(--info)}
+@media (prefers-reduced-motion:no-preference){.pulse{animation:pulse 1.6s infinite}@keyframes pulse{50%{opacity:.45}}}
+.btn{border:1px solid var(--line);background:var(--card2);border-radius:8px;padding:6px 12px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.danger{background:var(--bad-bg);color:var(--bad);border-color:var(--bad);font-weight:650}
+select.btn{padding:6px 8px}
+label.chk{display:inline-flex;gap:6px;align-items:center;cursor:pointer;color:var(--muted)}
+nav[role=tablist]{display:flex;gap:2px;padding:0 14px;background:var(--card);border-bottom:1px solid var(--line);overflow-x:auto;position:sticky;top:53px;z-index:19}
+nav button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;cursor:pointer;color:var(--muted);font-weight:600;white-space:nowrap}
+nav button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--accent)}
+nav button:hover{color:var(--ink)}
+main{max-width:1500px;margin:0 auto;padding:16px 18px 60px}
+section[hidden]{display:none}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.cols2{grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);min-width:0}
+.card h2,.card h3.t{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.kpi .v{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.kpi .s{color:var(--muted);font-size:12px;margin-top:2px}
+.kpi.good .v{color:var(--good)} .kpi.bad .v{color:var(--bad)} .kpi.warn .v{color:var(--warn)}
+.alerts{display:grid;gap:8px;margin-bottom:14px}
+.alert{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card)}
+.alert b{display:block}.alert span.d{color:var(--muted);font-size:13px}
+.alert.critical{background:var(--bad-bg);border-color:var(--bad)} .alert.warn{background:var(--warn-bg);border-color:var(--warn)}
+.alert.info{background:var(--info-bg)} .alert.ok{background:var(--good-bg)}
+.alert .ic{font-size:16px;line-height:1.3}
+.pipe{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:26px 22px;align-items:stretch}
+.node{position:relative;text-align:left;background:var(--card2);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;min-height:112px;display:flex;flex-direction:column;gap:3px}
+.node:hover{border-color:var(--accent)}
+.node.good{border-color:var(--good)} .node.warn{border-color:var(--warn)} .node.bad{border-color:var(--bad)} .node.mute{opacity:.85}
+.node h4{margin:0;font-size:13px;display:flex;gap:7px;align-items:center}
+.node .ln{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.node .ln b{color:var(--ink);font-weight:650}
+.node .ln i{font-size:11.5px}
+.node .step{position:absolute;top:-9px;right:10px;font-size:11px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:0 7px;color:var(--muted)}
+.node.main:not(:nth-child(6))::after{content:"➜";position:absolute;right:-20px;top:46%;color:var(--muted);font-size:16px}
+.node.side::before{content:"▲";position:absolute;top:-19px;left:50%;color:var(--muted);font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.chip{font-size:11px;padding:1px 7px;border-radius:6px;background:var(--card);border:1px solid var(--line);font-weight:650}
+.chip.hard{color:var(--bad)} .chip.entry{color:var(--warn)} .chip.overlay{color:var(--info)}
+@media (max-width:1100px){.pipe{grid-template-columns:repeat(2,minmax(0,1fr))}.node.main::after,.node.side::before{display:none!important}.spacer{display:none}}
+.tw{overflow:auto;max-height:420px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:6px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{position:sticky;top:0;background:var(--card2);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;z-index:1}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+.pos{color:var(--good)} .neg{color:var(--bad)} .mut{color:var(--muted)}
+.empty{color:var(--muted);padding:26px;text-align:center}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;overflow:visible}
+.chart .tip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.18);display:none;z-index:5;white-space:nowrap}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 0 6px}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.wf{display:grid;gap:7px}
+.wf .row{display:grid;grid-template-columns:150px 1fr 60px;gap:10px;align-items:center;font-size:12.5px}
+.wf .track{position:relative;height:16px;background:var(--card2);border-radius:5px;overflow:hidden}
+.wf .ghost{position:absolute;top:0;bottom:0;background:var(--bad-bg);border-right:2px solid var(--bad)}
+.wf .fill{position:absolute;top:3px;bottom:3px;left:0;background:var(--accent);border-radius:3px}
+.wf .fill.out{background:var(--good)}
+.strip{display:flex;gap:2px;flex-wrap:wrap}
+.strip i{width:9px;height:18px;border-radius:2px;background:var(--card2);display:block}
+.strip i.ALLOW{background:var(--good)} .strip i.REDUCE{background:var(--warn)} .strip i.BLOCK{background:#ea6a1f}
+.strip i.HOLD{background:var(--muted)} .strip i.FLATTEN{background:var(--bad)}
+.bars{display:grid;gap:6px}
+.bars .b{display:grid;grid-template-columns:170px 1fr 54px;gap:10px;align-items:center;font-size:12.5px}
+.bars .bar{height:14px;border-radius:4px;background:var(--accent)}
+.logbox{background:var(--card2);border:1px solid var(--line);border-radius:10px;height:62vh;overflow:auto;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:6px 0}
+.logbox div{padding:1px 12px;white-space:pre-wrap;overflow-wrap:anywhere;border-left:3px solid transparent}
+.logbox .ERROR,.logbox .CRITICAL{border-left-color:var(--bad);background:var(--bad-bg)}
+.logbox .WARNING{border-left-color:var(--warn);background:var(--warn-bg)}
+.logbox .CONT{color:var(--muted);padding-left:28px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px}
+input[type=search],input[type=text],input[type=password]{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;min-width:220px}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--card);border-left:1px solid var(--line);box-shadow:-8px 0 30px rgba(0,0,0,.25);transform:translateX(105%);transition:transform .2s;z-index:50;display:flex;flex-direction:column;visibility:hidden}
+#drawer.open{transform:none;visibility:visible}
+#drawer .dh{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--line)}
+#drawer .body{padding:14px 18px;overflow:auto;flex:1}
+pre.json{background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:10px;overflow:auto;font-size:12px;max-height:360px}
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:60}
+#modal.open{display:flex}
+#modal .box{background:var(--card);border:2px solid var(--bad);border-radius:14px;padding:20px;width:min(460px,92%)}
+.gauge{height:16px;border-radius:8px;position:relative;background:linear-gradient(90deg,var(--bad) 0 35%,var(--muted) 35% 65%,var(--good) 65% 100%);opacity:.9;margin:8px 0}
+.gauge i{position:absolute;top:-5px;width:4px;height:26px;background:var(--ink);border-radius:2px;transform:translateX(-2px)}
+details summary{cursor:pointer;font-weight:650;margin:6px 0}
+.guide h3{margin:16px 0 6px;font-size:15px}
+.guide p,.guide li{max-width:92ch}
+kbd{background:var(--card2);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 6px;font-size:12px}
+code{background:var(--card2);padding:1px 5px;border-radius:5px;font-size:12.5px}
+.banner{background:var(--bad);color:#fff;padding:8px 18px;font-weight:650;display:flex;gap:12px;align-items:center;justify-content:center}
+.banner[hidden]{display:none}
+.approval-list{display:grid;gap:10px}
+.proposal{border:1px solid var(--warn);background:var(--warn-bg);border-radius:10px;padding:12px}
+.proposal h3{margin:0 0 6px;font-size:15px}
+.proposal .actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+<div id="haltBanner" class="banner" hidden role="alert">
+  ⛔ KILL-SWITCH (HALT) ACTIVO: el bot cerrará todo y se detendrá.
+  <button class="btn" id="haltClear" style="color:#161a22">Quitar HALT</button>
+</div>
+<header class="top">
+  <h1><span aria-hidden="true">📈</span> Trading Agent</h1>
+  <span id="modeBadge" class="badge mute">—</span>
+  <span id="healthBadge" class="badge mute" role="status" aria-live="polite">—</span>
+  <span id="updated" class="mut" style="font-size:12px"></span>
+  <span class="sp"></span>
+  <label class="sr" for="symSel">Símbolo</label>
+  <select id="symSel" class="btn" title="Símbolo"></select>
+  <label class="chk"><input type="checkbox" id="utc"> UTC</label>
+  <label class="chk"><input type="checkbox" id="auto" checked> Auto (5 s)</label>
+  <button class="btn" id="refreshBtn" title="Actualizar ahora (R)">⟳ Actualizar</button>
+  <button class="btn" id="themeBtn" title="Cambiar tema (T)" aria-label="Cambiar tema">◐</button>
+  <button class="btn danger" id="haltBtn" title="Kill-switch: cerrar todo y detener el bot">⛔ HALT</button>
+</header>
+<nav role="tablist" aria-label="Secciones" id="tabs"></nav>
+
+<main id="main" tabindex="-1">
+<section id="t-resumen" role="tabpanel" aria-labelledby="tab-resumen">
+  <div id="alerts" class="alerts" aria-live="polite"></div>
+  <div id="kpis" class="grid kpis"></div>
+  <div class="card" style="margin-top:14px">
+    <h2>Pipeline en vivo <span class="mut" style="text-transform:none;letter-spacing:0;font-weight:500">pulsa una etapa para ver su detalle y los datos crudos</span></h2>
+    <div id="pipe" class="pipe"></div>
+  </div>
+  <div class="card" id="approvalCard" style="margin-top:14px" hidden>
+    <h2>Propuestas de operación · aprobación manual</h2>
+    <div id="approvalList"></div>
+  </div>
+  <div class="grid cols2" style="margin-top:14px">
+    <div class="card"><h2>Cadena de decisión de riesgo <span id="wfSub" class="mut" style="text-transform:none;font-weight:500"></span></h2><div id="wf" class="wf"></div></div>
+    <div class="card"><h2>Posición y protecciones</h2><div id="posCard"></div></div>
+  </div>
+  <div class="card" style="margin-top:14px"><h2>Equity vs. comprar y mantener <span id="eqSub" class="mut" style="text-transform:none;font-weight:500"></span></h2>
+    <div class="legend"><span><i style="background:var(--accent)"></i>Equity</span><span><i style="background:var(--muted)"></i>Buy &amp; hold</span><span>▲ compra · ▼ venta · ✖ stop</span></div>
+    <div id="chEq" class="chart"></div></div>
+  <div class="grid cols2" style="margin-top:14px">
+    <div class="card"><h2>Exposición</h2><div class="legend"><span><i style="background:var(--accent)"></i>Real</span><span><i style="background:var(--good)"></i>Aprobada</span><span><i style="background:var(--muted)"></i>Pedida por el agente</span></div><div id="chW" class="chart"></div></div>
+    <div class="card"><h2>Drawdown</h2><div id="chDD" class="chart"></div></div>
+  </div>
+</section>
+
+<section id="t-operaciones" role="tabpanel" aria-labelledby="tab-operaciones" hidden>
+  <div id="opKpis" class="grid kpis"></div>
+  <div class="card" style="margin-top:14px"><h2>Posiciones abiertas</h2><div id="openPos"></div></div>
+  <div class="grid cols2" style="margin-top:14px">
+    <div class="card"><h2>PnL por operación</h2><div id="chPnl" class="chart"></div></div>
+    <div class="card"><h2>PnL acumulado de operaciones</h2><div id="chCum" class="chart"></div></div>
+  </div>
+  <div class="grid cols2" style="margin-top:14px">
+    <div class="card"><h2>Operaciones cerradas</h2><div id="tbTrades"></div></div>
+    <div class="card"><h2>Ejecuciones (fills)</h2><div id="tbFills"></div></div>
+  </div>
+</section>
+
+<section id="t-riesgo" role="tabpanel" aria-labelledby="tab-riesgo" hidden>
+  <div id="riskKpis" class="grid kpis"></div>
+  <div class="grid cols2" style="margin-top:14px">
+    <div class="card"><h2>Reglas que más actúan <span class="mut" style="text-transform:none;font-weight:500">velas afectadas</span></h2><div id="ruleBars" class="bars"></div></div>
+    <div class="card"><h2>Línea de tiempo de decisiones <span class="mut" style="text-transform:none;font-weight:500">últimas 240 velas</span></h2>
+      <div class="legend strip" style="gap:14px"><span><i class="ALLOW"></i> ALLOW</span><span><i class="REDUCE"></i> REDUCE</span><span><i class="BLOCK"></i> BLOCK</span><span><i class="HOLD"></i> HOLD</span><span><i class="FLATTEN"></i> FLATTEN</span></div>
+      <div id="strip" class="strip" role="img" aria-label="Decisiones de riesgo por vela"></div></div>
+  </div>
+  <div class="card" style="margin-top:14px"><h2>Registro de decisiones <select id="decFilter" class="btn" aria-label="Filtrar por acción"><option value="">Todas</option><option>REDUCE</option><option>BLOCK</option><option>HOLD</option><option>FLATTEN</option></select></h2><div id="tbDec"></div></div>
+  <div class="card" style="margin-top:14px"><details><summary>Glosario de reglas de riesgo</summary><div id="glossary"></div></details></div>
+</section>
+
+<section id="t-modelo" role="tabpanel" aria-labelledby="tab-modelo" hidden>
+  <div class="grid cols2">
+    <div class="card"><h2>Modelo en uso</h2><div id="modelCard"></div></div>
+    <div class="card"><h2>Estado de drift</h2><div id="driftCard"></div></div>
+  </div>
+  <div class="grid cols2" style="margin-top:14px">
+    <div class="card"><h2>Features desplazadas en el tiempo</h2><div id="chDrift" class="chart"></div></div>
+    <div class="card"><h2>Sharpe en validación durante el entrenamiento</h2><div id="chVal" class="chart"></div></div>
+  </div>
+  <div class="card" style="margin-top:14px"><h2>Modelos entrenados</h2><div id="tbModels"></div></div>
+</section>
+
+<section id="t-sentimiento" role="tabpanel" aria-labelledby="tab-sentimiento" hidden><div id="sentWrap"></div></section>
+
+<section id="t-logs" role="tabpanel" aria-labelledby="tab-logs" hidden>
+  <div class="toolbar">
+    <fieldset style="border:0;padding:0;margin:0;display:flex;gap:10px"><legend class="sr">Niveles</legend>
+      <label class="chk"><input type="checkbox" class="lv" value="ERROR,CRITICAL" checked> Errores</label>
+      <label class="chk"><input type="checkbox" class="lv" value="WARNING" checked> Avisos</label>
+      <label class="chk"><input type="checkbox" class="lv" value="INFO" checked> Info</label>
+      <label class="chk"><input type="checkbox" class="lv" value="DEBUG"> Debug</label>
+    </fieldset>
+    <label class="sr" for="logQ">Buscar</label><input type="search" id="logQ" placeholder="Buscar en logs…">
+    <label class="sr" for="logN">Líneas</label><select id="logN" class="btn"><option>200</option><option selected>400</option><option>1000</option><option>3000</option></select>
+    <label class="chk"><input type="checkbox" id="follow" checked> Seguir</label>
+    <button class="btn" id="logCopy">Copiar</button>
+    <span id="logCount" class="mut"></span>
+  </div>
+  <div id="logbox" class="logbox" tabindex="0" aria-label="Registro del bot"></div>
+</section>
+
+<section id="t-config" role="tabpanel" aria-labelledby="tab-config" hidden>
+  <div class="toolbar"><label class="sr" for="cfgQ">Filtrar</label><input type="search" id="cfgQ" placeholder="Filtrar parámetros…"><span class="mut">Valores efectivos (defaults + .env). Para cambiarlos edita el .env y reinicia el bot. No se muestran credenciales.</span></div>
+  <div id="cfgWrap" class="grid cols2"></div>
+</section>
+
+<section id="t-guia" role="tabpanel" aria-labelledby="tab-guia" hidden>
+  <div class="card guide" id="guide"></div>
+</section>
+</main>
+
+<aside id="drawer" aria-hidden="true" aria-labelledby="drTitle" role="dialog">
+  <div class="dh"><h1 id="drTitle" style="flex:1;font-size:16px;margin:0">Detalle</h1><button class="btn" id="drClose" aria-label="Cerrar detalle">✕</button></div>
+  <div class="body" id="drBody"></div>
+</aside>
+
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="box">
+    <h2 id="mTitle" style="margin-top:0">⛔ Activar kill-switch</h2>
+    <p>El bot <b>cerrará todas las posiciones a mercado</b> y se detendrá (en ≤ 30 s). Para reanudar tendrás que quitar HALT y reiniciar <code>main.py</code>.</p>
+    <p>Escribe <b>HALT</b> para confirmar:</p>
+    <input type="text" id="mConfirm" autocomplete="off" aria-label="Escribe HALT para confirmar">
+    <div id="mTokenWrap" hidden style="margin-top:8px"><input type="password" id="mToken" placeholder="Token del panel" aria-label="Token del panel"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
+      <button class="btn" id="mCancel">Cancelar</button><button class="btn danger" id="mOk">Activar HALT</button>
+    </div>
+    <p id="mErr" class="neg" role="alert"></p>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ───────────────────────── utilidades ───────────────────────── */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const nf = (v, d = 2) => v == null || !isFinite(v) ? "—" : Number(v).toLocaleString("es-ES", { minimumFractionDigits: d, maximumFractionDigits: d });
+const pct = (v, d = 2, sign = false) => v == null || !isFinite(v) ? "—" : (sign && v > 0 ? "+" : "") + nf(v * 100, d) + " %";
+const sgn = v => v > 0 ? "pos" : v < 0 ? "neg" : "mut";
+const state = { tab: "resumen", symbol: null, auto: true, ov: null, meta: { risk_codes: {} }, utc: false, loaded: {}, cfg: null, token: sessionStorage.getItem("dashToken") || "" };
+
+function fmtT(t) {
+  const d = new Date(t); if (isNaN(d)) return "—";
+  return d.toLocaleString("es-ES", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: state.utc ? "UTC" : undefined });
+}
+function ago(sec) {
+  if (sec == null || !isFinite(sec)) return "—";
+  if (sec < 90) return `hace ${Math.round(sec)} s`;
+  if (sec < 5400) return `hace ${Math.round(sec / 60)} min`;
+  if (sec < 172800) return `hace ${(sec / 3600).toFixed(1)} h`;
+  return `hace ${Math.round(sec / 86400)} d`;
+}
+const sinceIso = iso => iso ? (Date.now() - Date.parse(iso)) / 1000 : null;
+const codeInfo = c => state.meta.risk_codes[c] || { name: c, desc: "", kind: "hard" };
+const chipHtml = c => `<span class="chip ${esc(codeInfo(c).kind)}" title="${esc(codeInfo(c).desc)}">${esc(codeInfo(c).name)}</span>`;
+async function api(path) {
+  try {
+    const r = await fetch(path, { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status);
+    return await r.json();
+  } catch (e) { return null; }
+}
+function table(cols, rows, empty = "Sin datos") {
+  if (!rows || !rows.length) return `<div class="empty">${esc(empty)}</div>`;
+  return `<div class="tw"><table><thead><tr>${cols.map(c => `<th class="${c.r ? "r" : ""}">${esc(c.h)}</th>`).join("")}</tr></thead><tbody>` +
+    rows.map(r => `<tr>${cols.map(c => `<td class="${c.r ? "r" : ""}">${c.f(r)}</td>`).join("")}</tr>`).join("") + "</tbody></table></div>";
+}
+
+/* ───────────────────────── gráficos SVG ───────────────────────── */
+function niceTicks(min, max, n = 5) {
+  if (!(max > min)) max = min + 1;
+  const step0 = (max - min) / n, mag = Math.pow(10, Math.floor(Math.log10(step0))), nm = step0 / mag;
+  const step = (nm < 1.5 ? 1 : nm < 3 ? 2 : nm < 7 ? 5 : 10) * mag, out = [];
+  for (let v = Math.ceil(min / step) * step; v <= max + 1e-9; v += step) out.push(+v.toFixed(12));
+  return out;
+}
+function downsample(data, max = 700) {
+  if (data.length <= max) return data;
+  const k = data.length / max, out = [];
+  for (let i = 0; i < max; i++) out.push(data[Math.floor(i * k)]);
+  out.push(data[data.length - 1]); return out;
+}
+function nearest(arr, x) {
+  let lo = 0, hi = arr.length - 1;
+  if (hi <= 0) return 0;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; arr[m].x <= x ? lo = m : hi = m; }
+  return Math.abs(arr[lo].x - x) <= Math.abs(arr[hi].x - x) ? lo : hi;
+}
+function chart(el, cfg) { el._cfg = cfg; draw(el); if (!el._ro) { el._ro = new ResizeObserver(() => draw(el)); el._ro.observe(el); } }
+function draw(el) {
+  const cfg = el._cfg; if (!cfg) return;
+  const series = cfg.series.map(s => ({ ...s, data: downsample(s.data, cfg.maxPoints || 700) })).filter(s => s.data.length);
+  if (!series.length) { el.innerHTML = '<div class="empty">Sin datos todavía</div>'; return; }
+  const W = Math.max(el.clientWidth, 260), H = cfg.height || 220, m = { l: 60, r: 12, t: 10, b: 24 };
+  const pw = W - m.l - m.r, ph = H - m.t - m.b;
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, maxLen = 0;
+  for (const s of series) { maxLen = Math.max(maxLen, s.data.length); for (const p of s.data) { if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x; if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y; } }
+  (cfg.hlines || []).forEach(h => { y0 = Math.min(y0, h.y); y1 = Math.max(y1, h.y); });
+  if (cfg.ymin != null) y0 = cfg.ymin; if (cfg.ymax != null) y1 = cfg.ymax;
+  if (cfg.zero) { y0 = Math.min(y0, 0); y1 = Math.max(y1, 0); }
+  if (y1 === y0) { y1 += 1; y0 -= 1; }
+  const pad = (y1 - y0) * 0.06; if (cfg.ymin == null) y0 -= pad; if (cfg.ymax == null) y1 += pad;
+  const hasBar = series.some(s => s.type === "bar"), bw = hasBar ? pw / maxLen : 0;
+  if (hasBar) { x0 -= 0.5; x1 += 0.5; }
+  if (x1 === x0) x1 = x0 + 1;
+  const X = x => m.l + (x - x0) / (x1 - x0) * pw, Y = y => m.t + (1 - (y - y0) / (y1 - y0)) * ph;
+  const yf = cfg.yFmt || (v => nf(v, Math.abs(v) < 10 ? 2 : 0)), xf = cfg.xFmt || (v => fmtT(v));
+  let g = "";
+  for (const t of niceTicks(y0, y1, 5)) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--grid)"/><text x="${m.l - 6}" y="${Y(t) + 4}" text-anchor="end" font-size="11" fill="var(--muted)">${esc(yf(t))}</text>`;
+  const nt = Math.max(2, Math.min(6, Math.floor(pw / 170)));
+  for (let i = 0; i <= nt; i++) { const x = x0 + (x1 - x0) * i / nt; g += `<text x="${X(x)}" y="${H - 6}" text-anchor="${i === 0 ? "start" : i === nt ? "end" : "middle"}" font-size="11" fill="var(--muted)">${esc(xf(x))}</text>`; }
+  for (const b of cfg.bands || []) g += `<rect x="${m.l}" width="${pw}" y="${Y(b.y1)}" height="${Math.max(0, Y(b.y0) - Y(b.y1))}" fill="${b.color}" opacity=".12"/>`;
+  for (const h of cfg.hlines || []) g += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(h.y)}" y2="${Y(h.y)}" stroke="${h.color || "var(--muted)"}" stroke-dasharray="4 4"/><text x="${W - m.r - 2}" y="${Y(h.y) - 3}" text-anchor="end" font-size="10.5" fill="${h.color || "var(--muted)"}">${esc(h.label || "")}</text>`;
+  for (const s of series) {
+    const col = s.color || "var(--accent)", d = s.data;
+    if (s.type === "bar") {
+      const w = Math.max(1, bw * 0.78);
+      g += d.map(p => `<rect x="${X(p.x) - w / 2}" y="${Math.min(Y(p.y), Y(0))}" width="${w}" height="${Math.max(1, Math.abs(Y(p.y) - Y(0)))}" fill="${s.colorBySign ? (p.y >= 0 ? "var(--good)" : "var(--bad)") : col}" rx="1.5"/>`).join("");
+      continue;
+    }
+    let path = "";
+    if (s.type === "step") d.forEach((p, i) => { path += i ? `H${X(p.x)}V${Y(p.y)}` : `M${X(p.x)} ${Y(p.y)}`; });
+    else d.forEach((p, i) => { path += `${i ? "L" : "M"}${X(p.x)} ${Y(p.y)}`; });
+    if (s.type === "area" || s.fill) {
+      const b = Y(cfg.zero ? 0 : y0);
+      g += `<path d="${path}L${X(d[d.length - 1].x)} ${b}L${X(d[0].x)} ${b}Z" fill="${col}" opacity=".18"/>`;
+    }
+    g += `<path d="${path}" fill="none" stroke="${col}" stroke-width="${s.width || 1.8}" ${s.dash ? 'stroke-dasharray="5 4"' : ""} stroke-linejoin="round"/>`;
+  }
+  for (const k of cfg.markers || []) {
+    if (k.x < x0 || k.x > x1) continue;
+    const cx = X(k.x), cy = Y(k.y), c = k.color || "var(--accent)";
+    const shape = k.kind === "buy" ? `<path d="M${cx} ${cy - 7}l6 11h-12z" fill="${c}"/>` : k.kind === "sell" ? `<path d="M${cx} ${cy + 7}l6 -11h-12z" fill="${c}"/>` : `<path d="M${cx - 5} ${cy - 5}l10 10m0 -10l-10 10" stroke="${c}" stroke-width="2.5"/>`;
+    g += `<g><title>${esc(k.label || "")}</title>${shape}</g>`;
+  }
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(cfg.label || "Gráfico")}" height="${H}">${g}<line class="cur" y1="${m.t}" y2="${m.t + ph}" stroke="var(--muted)" style="display:none"/><rect class="hit" x="${m.l}" y="${m.t}" width="${pw}" height="${ph}" fill="transparent"/></svg><div class="tip"></div>`;
+  const svg = $("svg", el), tip = $(".tip", el), cur = $(".cur", svg), hit = $(".hit", svg);
+  hit.addEventListener("mousemove", ev => {
+    const r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) / r.width * W, x = x0 + (px - m.l) / pw * (x1 - x0);
+    const lines = []; let anchor = null;
+    for (const s of series) {
+      const i = nearest(s.data, x), p = s.data[i]; if (anchor == null) anchor = p.x;
+      lines.push(`<span style="color:${s.color || "var(--accent)"}">●</span> ${esc(s.name)}: <b>${esc((s.tipFmt || yf)(p.y))}</b>${p.note ? " · " + esc(p.note) : ""}`);
+    }
+    cur.setAttribute("x1", X(anchor)); cur.setAttribute("x2", X(anchor)); cur.style.display = "";
+    tip.innerHTML = `<div class="mut">${esc(xf(anchor))}</div>` + lines.join("<br>"); tip.style.display = "block";
+    const tw = tip.offsetWidth, left = X(anchor) / W * r.width + 12;
+    tip.style.left = (left + tw > r.width ? left - tw - 24 : left) + "px"; tip.style.top = "8px";
+  });
+  hit.addEventListener("mouseleave", () => { tip.style.display = "none"; cur.style.display = "none"; });
+}
+
+/* ───────────────────────── pipeline ───────────────────────── */
+const STAGES = {
+  data: { title: "Mercado (WebSocket)", mod: "src/data/streams.py · buffer.py", desc: "Recibe velas y order book de Binance en tiempo real, con reconexión automática. Solo se procesa la vela cuando CIERRA. El buffer guarda las últimas ~1500 velas y se rellena si hay huecos." },
+  feat: { title: "Features", mod: "src/data/features.py", desc: "Calcula 14 indicadores (RSI, MACD, EMAs, Bollinger, ATR, ADX, volatilidad, volumen…) solo con información pasada. El scaler.json del modelo los normaliza exactamente como en el entrenamiento." },
+  model: { title: "Modelo RL", mod: "src/live/model_loader.py · observation.py", desc: "El agente (PPO/A2C/SAC) recibe la ventana de features + [posición, PnL no realizado, drawdown] y devuelve la exposición objetivo en [-1, 1]. Es determinista en producción." },
+  risk: { title: "Gestor de riesgo", mod: "src/risk/manager.py", desc: "Filtra la exposición pedida: stops ATR, circuit breaker, límites de exposición, VaR/CVaR, tope Kelly, cooldowns, spread, participación, mínimo del exchange y overlay de sentimiento. Reducir riesgo siempre se permite." },
+  exec: { title: "Ejecución", mod: "src/execution/algos.py", desc: "Convierte la exposición aprobada en órdenes: TWAP, límite (con relleno a mercado) o mercado. Actualiza la posición con lo REALMENTE llenado y avisa al gestor de riesgo." },
+  exch: { title: "Exchange y posición", mod: "src/execution/ccxt_gateway.py · paper.py", desc: "Binance (testnet/live) o simulador (paper). Mantiene un stop-loss real en el exchange que sigue al trailing; se concilia en cada vela por si un stop se ejecutó entre velas." },
+  sent: { title: "Sentimiento (LLM)", mod: "src/sentiment/", desc: "Analiza titulares con un LLM cada ~15 min. Solo REDUCE riesgo cuando el sentimiento contradice la posición (confianza mínima y no degradado)." },
+  drift: { title: "Drift del modelo", mod: "src/live/drift.py", desc: "Compara las features en vivo con la referencia guardada durante el entrenamiento (PSI) y vigila el drawdown del equity. En CRITICAL bloquea aumentos y nuevas entradas, permitiendo reducir." },
+  breaker: { title: "Circuit breaker", mod: "src/risk/breaker.py", desc: "Interruptor de cuenta: pérdida diaria, drawdown máximo y racha de pérdidas. Estado persistido en data/risk/breaker.json." },
+};
+function openDrawer(key, raw) {
+  const s = STAGES[key];
+  $("#drTitle").textContent = s.title;
+  $("#drBody").innerHTML = `<p>${esc(s.desc)}</p><p class="mut">Código: <code>${esc(s.mod)}</code></p><h3 style="margin:14px 0 6px">Datos crudos (debug)</h3><pre class="json">${esc(JSON.stringify(raw ?? null, null, 2))}</pre><button class="btn" id="drCopy">Copiar JSON</button>`;
+  $("#drCopy").onclick = () => navigator.clipboard?.writeText(JSON.stringify(raw, null, 2));
+  const d = $("#drawer"); d.classList.add("open"); d.setAttribute("aria-hidden", "false"); $("#drClose").focus();
+}
+function closeDrawer() { const d = $("#drawer"); d.classList.remove("open"); d.setAttribute("aria-hidden", "true"); }
+$("#drClose").onclick = closeDrawer;
+
+function node(key, cls, step, lines, kind = "main") {
+  const dotc = { good: "good", warn: "warn", bad: "bad", mute: "" }[cls] ?? "";
+  return `<button class="node ${kind} ${cls}" data-stage="${key}" aria-label="${esc(STAGES[key].title)}: ver detalle">${step ? `<span class="step">${step}</span>` : ""}<h4><span class="dot ${dotc}"></span>${esc(STAGES[key].title)}</h4>${lines.filter(Boolean).map(l => `<div class="ln">${l}</div>`).join("")}</button>`;
+}
+function renderPipeline() {
+  const ov = state.ov, st = ov?.status, s = st?.symbols?.[state.symbol], tf = st?.tf_seconds || 3600;
+  const live = ov?.health?.state === "ACTIVO", barAge = s ? sinceIso(s.bar) : null;
+  const dataCls = !s ? "mute" : !live ? "warn" : barAge > tf * 1.5 + 120 ? "bad" : "good";
+  const se = st?.sentiment?.[(state.symbol || "").split("/")[0]], bk = ov?.breaker || {}, ex = s?.last_exec, q = s?.qty || 0;
+  let html = "";
+  html += node("data", dataCls, "1", s ? [`Última vela: <b>${fmtT(s.bar)}</b>`, ago(barAge), `Precio: <b>${nf(s.price, s.price < 10 ? 4 : 2)}</b>`, `Spread: <b>${s.spread_bps == null ? "—" : nf(s.spread_bps, 1) + " bps"}</b>`] : ["Sin velas procesadas"]);
+  html += node("feat", s ? "good" : "mute", "2", s ? [`<b>${s.model?.n_features ?? "—"}</b> features · ventana <b>${s.model?.window ?? "—"}</b>`, `ATR: <b>${pct(s.atr_pct)}</b>`] : ["—"]);
+  html += node("model", s ? "good" : "mute", "3", s ? [`Acción del agente: <b>${nf(s.agent_action, 2)}</b>`, `<span title="${esc(s.model?.run)}">${esc((s.model?.run || "").slice(0, 28))}</span>`, `Val Sharpe: <b>${nf(s.model?.val?.sharpe)}</b>`] : ["—"]);
+  const rcls = !s ? "mute" : s.breaker !== "OK" ? "bad" : (s.action !== "ALLOW" ? "warn" : "good");
+  html += node("risk", rcls, "4", s ? [`Pedido <b>${nf(s.requested, 2)}</b> → <b>${nf(s.approved, 2)}</b>`, `Acción: <b>${esc(s.action)}</b>`, `<div class="chips">${(s.codes || []).map(chipHtml).join("") || '<span class="mut">sin recortes</span>'}</div>`] : ["—"]);
+  const ecls = !s ? "mute" : ex && ["failed", "aborted", "partial"].includes(ex.status) ? "warn" : "good";
+  html += node("exec", ecls, "5", ex ? [`<b>${esc(ex.method)}</b> ${esc(ex.side)} <b>${nf(ex.filled, 5)}</b>`, `@ ${nf(ex.avg_price)} · ${esc(ex.status)}`, `${ex.orders} órdenes · ${ago(sinceIso(ex.bar))}`] : [s ? "Sin ejecuciones aún" : "—"]);
+  const xcls = !s ? "mute" : q && !s.protection ? "warn" : "good";
+  html += node("exch", xcls, "6", s ? [q ? `Posición: <b>${nf(q, 5)}</b> (${pct(s.weight_after, 1)})` : "<b>Plano</b> (sin posición)", q ? `Entrada ${nf(s.entry)} · Stop ${nf(s.stop)}` : "", q ? `Stop en exchange: <b>${s.protection ? "✓ sí" : "✗ no"}</b>` : `Modo: <b>${esc(st.mode)}</b>`] : ["—"]);
+  html += `<div class="spacer"></div><div class="spacer"></div>`;
+  const dlevel = s?.drift?.level;
+  const dcls = !s?.drift || ["DISABLED", "WARMUP", "UNAVAILABLE"].includes(dlevel) ? "mute" : dlevel === "OK" ? "good" : dlevel === "WARN" ? "warn" : "bad";
+  html += node("drift", dcls, "", s?.drift ? [`Nivel: <b>${esc(dlevel)}</b>`, `Features: <b>${s.drift.n_drifted}/${s.drift.n_features}</b>`, s.entries_paused ? "<b>⏸ CRITICAL: entradas/aumentos pausados</b>" : esc(s.drift.reasons?.[0] || "Entradas habilitadas"), '<i>→ CRITICAL bloquea nuevas entradas</i>'] : ["Esperando evaluación de features", '<i>→ CRITICAL bloquea nuevas entradas</i>'], "side");
+  const sentStatus = se?.status || (!se ? "PENDING" : se.degraded ? "DEGRADED" : "ACTIVE");
+  const sentCls = sentStatus === "ACTIVE" ? "good" : sentStatus === "DEGRADED" ? "warn" : "mute";
+  const sentLines = se?.score != null
+    ? [`Score: <b>${nf(se.score, 0)}</b>/100 · conf <b>${nf(se.confidence, 2)}</b>`, se.degraded ? "<b>⚠ degradado (ignorado)</b>" : "Activo", se.age_min == null ? "" : ago(se.age_min * 60), '<i>→ solo reduce si contradice</i>']
+    : [`${esc(sentStatus)}: ${esc(se?.reason || "sin resultado recibido")}`, '<i>→ solo reduce si contradice</i>'];
+  html += node("sent", sentCls, "", sentLines, "side");
+  html += node("breaker", !s ? "mute" : s.breaker === "OK" ? "good" : "bad", "", [`Estado: <b>${esc(s?.breaker || bk.state || "—")}</b>`, `Máx. equity: <b>${nf(bk.peak_equity)}</b>`, `Operaciones (Kelly): <b>${ov?.kelly_trades ?? 0}</b>`, '<i>→ fuerza solo-reducir en Riesgo</i>'], "side");
+  html += `<div class="spacer"></div>`;
+  $("#pipe").innerHTML = html;
+  const approvalCard = $("#approvalCard");
+  const proposals = (st?.pending_proposals || []).filter(p => p.symbol === state.symbol);
+  approvalCard.hidden = !st?.manual_approval;
+  if (st?.manual_approval) {
+    $("#approvalList").innerHTML = proposals.length ? `<div class="approval-list">${proposals.map(p => {
+      const expired = Date.now() >= Date.parse(p.expires_at);
+      const reasons = (p.risk_reasons || []).map(r => `<li>${esc(r.code)}: ${esc(r.message)}</li>`).join("");
+      return `<article class="proposal"><h3>${esc(p.side)} ${nf(p.quantity, 6)} ${esc(p.symbol)}</h3>
+        <div>Precio de referencia: <b>${nf(p.price)}</b> · Notional estimado: <b>${nf(p.notional)}</b></div>
+        <div>Exposición actual: <b>${pct(p.current_weight, 2)}</b> → aprobada por riesgo: <b>${pct(p.approved_weight, 2)}</b></div>
+        <div>Señal del agente: ${nf(p.requested_weight, 2)} · ${esc(p.risk_action)} · Vela ${fmtT(p.bar)}</div>
+        ${reasons ? `<ul>${reasons}</ul>` : ""}
+        <div class="mut">Caduca ${fmtT(p.expires_at)}. Al aprobar, el riesgo se vuelve a comprobar; si cambia, no se ejecuta.</div>
+        <div class="actions"><button class="btn danger" data-approval="${esc(p.id)}" data-approve="true" ${expired ? "disabled" : ""}>Aprobar operación PAPER</button>
+        <button class="btn" data-approval="${esc(p.id)}" data-approve="false">Rechazar</button></div>
+        ${expired ? '<div role="status">Propuesta caducada; espera la siguiente señal.</div>' : ""}</article>`;
+    }).join("")}</div>` : '<div class="empty">Sin propuestas para este símbolo. Se mostrará una cuando el modelo solicite un cambio de posición.</div>';
+    $$("#approvalList [data-approval]").forEach(button => {
+      button.onclick = async () => {
+        button.disabled = true;
+        try {
+          await postApproval(button.dataset.approval, button.dataset.approve === "true");
+          await tick();
+        } catch (error) {
+          alert("No se pudo procesar la propuesta: " + error.message);
+          await tick();
+        }
+      };
+    });
+  }
+  const raw = k => k === "sent" ? (se || { status: "PENDING", reason: "No hay resultado de sentimiento disponible para este activo." })
+    : k === "drift" ? (s?.drift || { level: "PENDING", reason: "No hay vela procesada para evaluar drift.", entries_paused: false })
+    : k === "breaker" ? bk : k === "exec" ? ex : s;
+  $$("#pipe .node").forEach(n => n.onclick = () => openDrawer(n.dataset.stage, raw(n.dataset.stage)));
+}
+
+/* ───────────────────────── KPIs, alertas y waterfall ───────────────────────── */
+const kpi = (l, v, s = "", tone = "") => `<div class="card kpi ${tone}"><div class="s" style="margin:0 0 4px">${esc(l)}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+function renderTop() {
+  const ov = state.ov; if (!ov) return;
+  const m = $("#modeBadge"), mode = ov.status?.mode || "—";
+  m.textContent = mode; m.className = "badge " + (mode === "LIVE" ? "bad pulse" : mode === "TESTNET" ? "warn" : (mode === "PAPER" || mode === "DEMO") ? "info" : "mute");
+  const h = $("#healthBadge"), hs = ov.health.state;
+  h.innerHTML = `<span class="dot ${{ ACTIVO: "good", DETENIDO: "", SIN_LATIDO: "bad", SIN_DATOS: "" }[hs]}"></span>${esc(ov.health.label)}`;
+  h.className = "badge " + ({ ACTIVO: "good", DETENIDO: "mute", SIN_LATIDO: "bad", SIN_DATOS: "mute" }[hs]);
+  $("#updated").textContent = ov.health.heartbeat_age != null ? "latido " + ago(ov.health.heartbeat_age) : "";
+  $("#haltBanner").hidden = !ov.halt;
+  const sel = $("#symSel");
+  if (sel.dataset.syms !== ov.symbols.join(",")) { sel.innerHTML = ov.symbols.map(s => `<option>${esc(s)}</option>`).join(""); sel.dataset.syms = ov.symbols.join(","); }
+  if (!state.symbol || !ov.symbols.includes(state.symbol)) state.symbol = ov.symbol;
+  sel.value = state.symbol || "";
+  const ic = { critical: "⛔", warn: "⚠️", info: "ℹ️", ok: "✅" };
+  $("#alerts").innerHTML = ov.diagnosis.map(d => `<div class="alert ${esc(d.level)}"><span class="ic" aria-hidden="true">${ic[d.level]}</span><div><b>${esc(d.title)}</b><span class="d">${esc(d.detail)}</span></div></div>`).join("");
+  const k = ov.kpi, t = ov.trades, s = ov.status?.symbols?.[state.symbol];
+  const pos = s?.qty ? `${s.qty > 0 ? "LARGO" : "CORTO"} ${pct(Math.abs(s.weight), 1)}` : "Plano";
+  $("#kpis").innerHTML = [
+    kpi("Equity", k.equity != null ? nf(k.equity) : "—", k.start_equity ? `inicio ${nf(k.start_equity)}` : ""),
+    kpi("Retorno total", pct(k.return, 2, true), `${k.bars ?? 0} velas`, k.return > 0 ? "good" : k.return < 0 ? "bad" : ""),
+    kpi("PnL hoy (UTC)", pct(k.pnl_today, 2, true), "", k.pnl_today > 0 ? "good" : k.pnl_today < 0 ? "bad" : ""),
+    kpi("Drawdown actual", pct(k.cur_dd), `máximo ${pct(k.max_dd)}`, k.cur_dd > 0.1 ? "bad" : k.cur_dd > 0.05 ? "warn" : ""),
+    kpi("Posición", pos, s?.qty ? `entrada ${nf(s.entry)} · stop ${nf(s.stop)}` : ""),
+    kpi("Operaciones", t.n || 0, t.n ? `acierto ${pct(t.win_rate, 0)} · PF ${t.profit_factor == null ? "—" : nf(t.profit_factor)}` : "sin cerradas"),
+    kpi("Circuit breaker", esc(s?.breaker || ov.breaker?.state || "—"), "", (s?.breaker || "OK") === "OK" ? "good" : "bad"),
+  ].join("");
+}
+function renderWaterfall() {
+  const s = state.ov?.status?.symbols?.[state.symbol], el = $("#wf");
+  if (!s) { el.innerHTML = '<div class="empty">Sin decisiones todavía</div>'; $("#wfSub").textContent = ""; return; }
+  $("#wfSub").textContent = `${s.action} · ${fmtT(s.bar)}`;
+  const scale = Math.max(1, Math.abs(s.requested), ...(s.reasons || []).map(r => Math.abs(r.before)));
+  const row = (label, a, b, kind, tip) => {
+    const lo = Math.min(Math.abs(a), Math.abs(b)) / scale * 100, hi = Math.max(Math.abs(a), Math.abs(b)) / scale * 100;
+    return `<div class="row" title="${esc(tip || "")}"><div>${label}</div><div class="track">${kind === "step" ? `<div class="ghost" style="left:${lo}%;width:${hi - lo}%"></div>` : ""}<div class="fill ${kind === "out" ? "out" : ""}" style="width:${kind === "step" ? Math.abs(b) / scale * 100 : hi}%"></div></div><div style="text-align:right"><b>${nf(b, 2)}</b></div></div>`;
+  };
+  let h = row("Pedido del agente", s.requested, s.requested, "in", "Exposición objetivo del modelo (fracción del equity)");
+  for (const r of s.reasons || []) h += row(chipHtml(r.code), r.before, r.after, "step", r.message);
+  h += row("<b>Aprobado</b>", s.approved, s.approved, "out", "Lo que se ejecuta");
+  if (!(s.reasons || []).length) h += '<div class="mut">Ninguna regla recortó el objetivo.</div>';
+  el.innerHTML = h;
+}
+function renderPosCard() {
+  const s = state.ov?.status?.symbols?.[state.symbol], el = $("#posCard");
+  if (!s) { el.innerHTML = '<div class="empty">Sin datos</div>'; return; }
+  if (!s.qty) { el.innerHTML = `<div class="empty">Sin posición abierta.<br><span class="mut">Kelly máx. ${nf(s.kelly_cap, 2)} · VaR máx. ${s.var_cap == null ? "—" : nf(s.var_cap, 2)}</span></div>`; return; }
+  const side = s.qty > 0 ? 1 : -1, un = side * (s.price / s.entry - 1);
+  const rng = [s.stop, s.entry, s.price, s.take_profit].filter(v => v != null), lo = Math.min(...rng), hi = Math.max(...rng), P = v => 6 + (v - lo) / (hi - lo || 1) * 88;
+  const mk = (v, lbl, c) => v == null ? "" : `<div style="position:absolute;left:${P(v)}%;top:0;bottom:0;border-left:2px solid ${c}"><span style="position:absolute;top:-17px;left:-14px;font-size:11px;color:${c};white-space:nowrap">${esc(lbl)}</span></div>`;
+  el.innerHTML = `<div class="grid" style="grid-template-columns:repeat(2,1fr)">
+    <div><div class="mut">Cantidad</div><b>${nf(s.qty, 6)}</b></div><div><div class="mut">PnL no realizado</div><b class="${sgn(un)}">${pct(un, 2, true)}</b></div>
+    <div><div class="mut">Entrada</div><b>${nf(s.entry)}</b></div><div><div class="mut">Precio</div><b>${nf(s.price)}</b></div></div>
+    <div style="position:relative;height:30px;margin:34px 6px 10px;background:var(--card2);border-radius:6px">${mk(s.stop, "Stop " + nf(s.stop, 0), "var(--bad)")}${mk(s.entry, "Entrada", "var(--muted)")}${mk(s.price, "Ahora", "var(--accent)")}${mk(s.take_profit, "TP " + nf(s.take_profit, 0), "var(--good)")}</div>
+    <p style="margin:6px 0 0">Protección: <b>${typeof s.protection === "string" ? esc(s.protection) : s.protection ? `✓ ${esc(s.protection.id)} @ ${nf(s.protection.stop)}` : "✗ ninguno"}</b></p>`;
+}
+
+/* ───────────────────────── cargas por pestaña ───────────────────────── */
+async function loadResumen() {
+  renderTop(); renderPipeline(); renderWaterfall(); renderPosCard();
+  const [eq, fills] = await Promise.all([api(`/api/equity?symbol=${encodeURIComponent(state.symbol || "")}&limit=4000`), api("/api/fills?limit=400")]);
+  if (!eq || !eq.rows.length) { ["chEq", "chW", "chDD"].forEach(i => $("#" + i).innerHTML = '<div class="empty">Sin datos todavía</div>'); return; }
+  const R = eq.rows.map(r => ({ ...r, x: Date.parse(r.t) })), xs = R.map(r => ({ x: r.x }));
+  const ser = f => R.map(r => ({ x: r.x, y: f(r) }));
+  const markers = (fills || []).filter(f => f.symbol === eq.symbol).map(f => {
+    const i = nearest(xs, Date.parse(f.bar)), isStop = String(f.method).includes("stop") || (f.codes || []).some(c => ["STOP_LOSS", "TRAILING_STOP"].includes(c));
+    return { x: R[i].x, y: R[i].equity, kind: isStop ? "stop" : f.side, color: isStop ? "var(--bad)" : f.side === "buy" ? "var(--good)" : "var(--warn)", label: `${f.side} ${nf(f.qty, 5)} @ ${nf(f.price)} (${f.method})` };
+  });
+  chart($("#chEq"), { height: 260, label: "Equity", series: [{ name: "Equity", data: ser(r => r.equity), color: "var(--accent)" }, { name: "Buy & hold", data: ser(r => r.bench), color: "var(--muted)", dash: 1, width: 1.4 }], markers });
+  $("#eqSub").textContent = `${eq.symbol} · ${R.length} velas`;
+  chart($("#chW"), { height: 200, label: "Exposición", yFmt: v => pct(v, 0), ymin: 0, series: [{ name: "Real", data: ser(r => r.weight), color: "var(--accent)", type: "step", fill: 1 }, { name: "Aprobada", data: ser(r => r.approved), color: "var(--good)", type: "step", width: 1.2 }, { name: "Pedida", data: ser(r => r.requested), color: "var(--muted)", width: 1 }].map(s => ({ ...s, tipFmt: v => pct(v, 1) })) });
+  chart($("#chDD"), { height: 200, label: "Drawdown", yFmt: v => pct(v, 1), zero: true, series: [{ name: "Drawdown", data: ser(r => -r.dd), color: "var(--bad)", type: "area", tipFmt: v => pct(v, 2) }] });
+}
+async function loadOperaciones() {
+  renderTop();
+  const [trades, fills] = await Promise.all([api("/api/trades?limit=400"), api("/api/fills?limit=200")]);
+  const t = state.ov?.trades || {}, s = state.ov?.status?.symbols || {};
+  $("#opKpis").innerHTML = [kpi("Operaciones", t.n || 0), kpi("Tasa de acierto", pct(t.win_rate, 0)), kpi("Profit factor", t.profit_factor == null ? "—" : nf(t.profit_factor), "ganancias / pérdidas", t.profit_factor > 1 ? "good" : t.profit_factor < 1 ? "bad" : ""),
+    kpi("Expectativa", pct(t.expectancy, 2, true), "por operación", t.expectancy > 0 ? "good" : t.expectancy < 0 ? "bad" : ""), kpi("Ganancia media", pct(t.avg_win, 2, true), "", "good"), kpi("Pérdida media", pct(t.avg_loss, 2, true), "", "bad"), kpi("Mejor / peor", `${pct(t.best, 1, true)} / ${pct(t.worst, 1, true)}`)].join("");
+  const open = Object.entries(s).filter(([, v]) => v.qty);
+  $("#openPos").innerHTML = table([{ h: "Símbolo", f: r => esc(r[0]) }, { h: "Lado", f: r => r[1].qty > 0 ? "LARGO" : "CORTO" }, { h: "Cantidad", r: 1, f: r => nf(r[1].qty, 6) }, { h: "Entrada", r: 1, f: r => nf(r[1].entry) }, { h: "Precio", r: 1, f: r => nf(r[1].price) },
+    { h: "PnL no real.", r: 1, f: r => { const u = Math.sign(r[1].qty) * (r[1].price / r[1].entry - 1); return `<span class="${sgn(u)}">${pct(u, 2, true)}</span>`; } }, { h: "Stop", r: 1, f: r => nf(r[1].stop) }, { h: "TP", r: 1, f: r => nf(r[1].take_profit) },
+    { h: "Stop en exchange", f: r => r[1].protection ? "✓" : "✗" }], open, "Sin posiciones abiertas");
+  const tr = (trades || []).slice().reverse();
+  const pnl = tr.map((x, i) => ({ x: i + 1, y: x.pnl_pct, note: `${x.reason} · ${fmtT(x.bar)}` }));
+  let acc = 0; const cum = tr.map((x, i) => ({ x: i + 1, y: (acc += x.pnl_pct) }));
+  const idxF = v => "#" + Math.round(v);
+  chart($("#chPnl"), { height: 210, xFmt: idxF, yFmt: v => pct(v, 1), zero: true, series: [{ name: "PnL", type: "bar", colorBySign: true, data: pnl, tipFmt: v => pct(v, 2, true) }] });
+  chart($("#chCum"), { height: 210, xFmt: idxF, yFmt: v => pct(v, 1), zero: true, series: [{ name: "Acumulado", data: cum, type: "area", color: "var(--accent)", tipFmt: v => pct(v, 2, true) }] });
+  $("#tbTrades").innerHTML = table([{ h: "Cierre", f: r => fmtT(r.bar) }, { h: "Lado", f: r => r.side > 0 ? "LARGO" : "CORTO" }, { h: "Entrada", r: 1, f: r => nf(r.entry) }, { h: "Salida", r: 1, f: r => nf(r.exit) }, { h: "PnL", r: 1, f: r => `<b class="${sgn(r.pnl_pct)}">${pct(r.pnl_pct, 2, true)}</b>` }, { h: "Motivo", f: r => `<span class="badge mute">${esc(r.reason)}</span>` }], trades, "Sin operaciones cerradas");
+  $("#tbFills").innerHTML = table([{ h: "Hora", f: r => fmtT(r.bar) }, { h: "Lado", f: r => `<b class="${r.side === "buy" ? "pos" : "neg"}">${esc(r.side)}</b>` }, { h: "Cant.", r: 1, f: r => nf(r.qty, 5) }, { h: "Precio", r: 1, f: r => nf(r.price) }, { h: "Comisión", r: 1, f: r => nf((r.fee_quote || 0) + (r.fee_base || 0) * r.price, 3) }, { h: "Método", f: r => esc(r.method) }, { h: "Estado", f: r => esc(r.status) }], fills, "Sin ejecuciones");
+}
+let decCache = [];
+async function loadRiesgo() {
+  renderTop();
+  const [r, eq] = await Promise.all([api("/api/risk?limit=400"), api(`/api/equity?symbol=${encodeURIComponent(state.symbol || "")}&limit=240`)]);
+  if (!r) return;
+  const s = state.ov?.status?.symbols?.[state.symbol] || {}, bk = r.breaker || {}, ks = r.kelly || [];
+  const wins = ks.filter(x => x > 0), loss = ks.filter(x => x <= 0), wr = ks.length ? wins.length / ks.length : null;
+  const payoff = wins.length && loss.length ? (wins.reduce((a, b) => a + b, 0) / wins.length) / (-loss.reduce((a, b) => a + b, 0) / loss.length) : null;
+  $("#riskKpis").innerHTML = [kpi("Circuit breaker", esc(bk.state || "—"), `máx. equity ${nf(bk.peak_equity)}`, (bk.state || "OK") === "OK" ? "good" : "bad"), kpi("Operaciones para Kelly", ks.length, "ventana móvil"), kpi("Acierto / payoff", `${pct(wr, 0)} / ${payoff == null ? "—" : nf(payoff)}`),
+    kpi("Tope Kelly", nf(s.kelly_cap), "exposición máx. por Kelly"), kpi("Tope VaR", s.var_cap == null ? "—" : nf(s.var_cap), s.var_unit == null ? "" : `VaR por unidad ${pct(s.var_unit)}`), kpi("Stop / TP", `${nf(s.stop, 0)} / ${nf(s.take_profit, 0)}`, "nivel vigente")].join("");
+  const counts = Object.entries(r.counts).sort((a, b) => b[1] - a[1]), mx = Math.max(1, ...counts.map(c => c[1]));
+  $("#ruleBars").innerHTML = counts.length ? counts.map(([c, n]) => `<div class="b"><div>${chipHtml(c)}</div><div><div class="bar" style="width:${n / mx * 100}%"></div></div><div style="text-align:right"><b>${n}</b></div></div>`).join("") + `<div class="mut">sobre ${r.bars} velas evaluadas</div>` : '<div class="empty">Ninguna regla ha actuado todavía</div>';
+  $("#strip").innerHTML = (eq?.rows || []).map(x => `<i class="${esc(x.action)}" title="${esc(fmtT(x.t) + " · " + x.action + " " + nf(x.requested) + "→" + nf(x.approved) + " " + (x.codes || []).join(","))}"></i>`).join("") || '<div class="empty">Sin datos</div>';
+  decCache = r.decisions; renderDecisions();
+  $("#glossary").innerHTML = table([{ h: "Regla", f: r => chipHtml(r[0]) }, { h: "Tipo", f: r => r[1].kind === "hard" ? "Dura (puede forzar reducir)" : r[1].kind === "entry" ? "De entrada (solo bloquea aumentos)" : "Overlay" }, { h: "Qué hace", f: r => esc(r[1].desc) }], Object.entries(state.meta.risk_codes));
+}
+function renderDecisions() {
+  const f = $("#decFilter").value, rows = decCache.filter(d => !f || d.action === f);
+  $("#tbDec").innerHTML = table([{ h: "Hora", f: r => fmtT(r.timestamp) }, { h: "Acción", f: r => `<span class="badge ${r.action === "FLATTEN" ? "bad" : r.action === "ALLOW" ? "good" : "warn"}">${esc(r.action)}</span>` }, { h: "Pedido → Aprobado", r: 1, f: r => `${nf(r.requested)} → <b>${nf(r.approved)}</b>` }, { h: "Actual", r: 1, f: r => nf(r.current) }, { h: "Reglas", f: r => (r.reasons || []).map(x => chipHtml(x.code)).join(" ") }, { h: "Detalle", f: r => `<span class="mut">${esc((r.reasons || []).map(x => x.msg).join(" | ").slice(0, 120))}</span>` }], rows, "Sin decisiones registradas");
+}
+$("#decFilter").onchange = renderDecisions;
+async function loadModelo() {
+  renderTop();
+  const [models, drift] = await Promise.all([api("/api/models"), api("/api/drift?limit=600")]);
+  const s = state.ov?.status?.symbols?.[state.symbol], inUse = (models || []).find(m => s?.model?.run === m.run) || (models || [])[0];
+  const mm = (o, k) => o && o[k] != null ? o[k] : null;
+  $("#modelCard").innerHTML = inUse ? `<p><b>${esc(inUse.run)}</b><br><span class="mut">${esc(inUse.algo)} · ${inUse.timesteps?.toLocaleString("es-ES")} pasos · mejor validación en ${inUse.best_val_step?.toLocaleString("es-ES")}</span></p>` + table([{ h: "Métrica", f: r => r[0] }, { h: "Validación", r: 1, f: r => r[1] }, { h: "Test (fuera de muestra)", r: 1, f: r => r[2] }], [["Sharpe", nf(mm(inUse.val, "sharpe")), nf(mm(inUse.test, "sharpe"))], ["Retorno", pct(mm(inUse.val, "total_return")), pct(mm(inUse.test, "total_return"))], ["Máx. drawdown", pct(mm(inUse.val, "max_drawdown")), pct(mm(inUse.test, "max_drawdown"))], ["Operaciones", mm(inUse.val, "n_trades") ?? "—", mm(inUse.test, "n_trades") ?? "—"], ["Comisiones", nf(mm(inUse.val, "fees_paid")), nf(mm(inUse.test, "fees_paid"))]]) + `<p class="mut" style="margin-top:8px">${esc(inUse.split)}</p>` : '<div class="empty">No hay report.json de modelos en data/models</div>';
+  const d = s?.drift;
+  $("#driftCard").innerHTML = d ? `<p><span class="badge ${d.level === "OK" ? "good" : d.level === "WARN" ? "warn" : "bad"}">${esc(d.level)}</span> ${s.entries_paused ? '<span class="badge warn">⏸ entradas pausadas</span>' : ""}</p><p>Features desplazadas: <b>${d.n_drifted}/${d.n_features}</b>${d.drifted?.length ? `<br><span class="mut">${d.drifted.map(esc).join(", ")}</span>` : ""}</p><p>t-stat del rendimiento: <b>${d.tstat == null ? "—" : nf(d.tstat)}</b> · drawdown vivo: <b>${pct(d.drawdown)}</b></p>${(d.reasons || []).map(x => `<p class="neg">${esc(x)}</p>`).join("")}<p class="mut">PSI &gt; umbral por feature, comparado con el tramo de entrenamiento. Es una alarma estadística, no una prueba de fallo.</p>` : '<div class="empty">El monitor aún no ha evaluado (necesita ≥ 72 velas en vivo)</div>';
+  const dd = (drift || []).filter(x => !state.symbol || x.symbol === state.symbol);
+  chart($("#chDrift"), { height: 200, yFmt: v => nf(v, 0), zero: true, series: [{ name: "Features desplazadas", type: "step", fill: 1, color: "var(--warn)", data: dd.map(x => ({ x: Date.parse(x.bar), y: x.n_drifted, note: x.level })) }], hlines: dd.length ? [{ y: (dd[0].n_features || 14) * 0.25, label: "WARN", color: "var(--warn)" }, { y: (dd[0].n_features || 14) * 0.5, label: "CRITICAL", color: "var(--bad)" }] : [] });
+  chart($("#chVal"), { height: 200, xFmt: v => nf(v / 1000, 0) + "k", zero: true, series: [{ name: "Sharpe (val)", data: (inUse?.history || []).map(h => ({ x: h.t, y: h.sharpe })), color: "var(--accent)" }] });
+  $("#tbModels").innerHTML = table([{ h: "Corrida", f: r => `<b>${esc(r.run)}</b>${r.run === s?.model?.run ? ' <span class="badge info">en uso</span>' : ""}` }, { h: "Algo", f: r => esc(r.algo) }, { h: "Pasos", r: 1, f: r => r.timesteps?.toLocaleString("es-ES") }, { h: "Sharpe val", r: 1, f: r => nf(r.val?.sharpe) }, { h: "Sharpe test", r: 1, f: r => `<b>${nf(r.test?.sharpe)}</b>` }, { h: "Retorno test", r: 1, f: r => pct(r.test?.total_return) }, { h: "DD test", r: 1, f: r => pct(r.test?.max_drawdown) }], models, "Sin modelos entrenados");
+}
+async function loadSent() {
+  renderTop();
+  const [all, cfg] = await Promise.all([api("/api/sentiment?limit=300"), state.cfg ? Promise.resolve(state.cfg) : api("/api/config")]); state.cfg = cfg;
+  const rk = cfg?.["Riesgo (F4)"] || {}, lo = rk.sentiment_bearish ?? 35, hi = rk.sentiment_bullish ?? 65, minc = rk.sentiment_min_confidence ?? 0.3;
+  const wrap = $("#sentWrap"), assets = Object.keys(all || {});
+  if (!assets.length) { wrap.innerHTML = '<div class="card"><div class="empty">Sin histórico de sentimiento en data/sentiment. Ejecuta scripts/run_sentiment.py o arranca el bot sin --no-sentiment.</div></div>'; return; }
+  wrap.innerHTML = assets.map(a => {
+    const rows = all[a], last = rows[rows.length - 1] || {};
+    return `<div class="card" style="margin-bottom:14px"><h2>${esc(a)} <span class="badge ${last.degraded ? "warn" : "good"}">${last.degraded ? "degradado" : "ok"}</span></h2>
+    <div class="grid cols2"><div><div class="mut">Score actual (0 = muy bajista · 100 = muy alcista)</div><div style="font-size:30px;font-weight:700">${nf(last.score, 1)}</div>
+    <div class="gauge" style="background:linear-gradient(90deg,var(--bad) 0 ${lo}%,var(--muted) ${lo}% ${hi}%,var(--good) ${hi}% 100%)" role="img" aria-label="Score ${nf(last.score, 0)} de 100"><i style="left:${Math.max(0, Math.min(100, last.score || 0))}%"></i></div>
+    <p class="mut">Confianza <b>${nf(last.confidence, 2)}</b> (mín. ${esc(minc)}) · titulares puntuados ${esc(last.n_scored)}/${esc(last.n_headlines)} · Fear&amp;Greed ${esc(last.fear_greed ?? "—")} (no se usa)<br>Recorta riesgo si score ≤ ${esc(lo)} con posición larga, o ≥ ${esc(hi)} con corta.</p>
+    <h3 style="margin:12px 0 4px;font-size:14px">Titulares que más movieron el score</h3><ul>${(last.drivers || []).map(d => `<li>${esc(d)}</li>`).join("") || "<li class='mut'>—</li>"}</ul></div>
+    <div><div id="chS-${esc(a)}" class="chart"></div></div></div></div>`;
+  }).join("");
+  assets.forEach(a => chart(document.getElementById("chS-" + a), { height: 230, ymin: 0, ymax: 100, yFmt: v => nf(v, 0), bands: [{ y0: 0, y1: lo, color: "var(--bad)" }, { y0: hi, y1: 100, color: "var(--good)" }], hlines: [{ y: lo, label: "bajista", color: "var(--bad)" }, { y: hi, label: "alcista", color: "var(--good)" }], series: [{ name: "Score", color: "var(--accent)", data: all[a].map(r => ({ x: Date.parse(r.timestamp), y: r.score, note: "conf " + nf(r.confidence, 2) })) }] }));
+}
+let lastLogSig = "";
+async function loadLogs() {
+  const lv = $$(".lv:checked").map(c => c.value).join(","), q = $("#logQ").value.trim(), n = $("#logN").value;
+  const rows = await api(`/api/logs?n=${n}&level=${encodeURIComponent(lv)}&q=${encodeURIComponent(q)}`); if (!rows) return;
+  const sig = rows.length + "|" + (rows[rows.length - 1]?.t ?? "") + (rows[rows.length - 1]?.msg ?? "").slice(0, 30);
+  $("#logCount").textContent = `${rows.length} líneas`;
+  if (sig === lastLogSig) return; lastLogSig = sig;
+  const box = $("#logbox"), atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 40, first = !box.dataset.init;
+  box.innerHTML = rows.map(r => `<div class="${esc(r.level)}">${r.level === "CONT" ? "" : `<span class="mut">${esc(r.t.slice(5))}</span> <b>${esc(({ WARNING: "WARN", ERROR: "ERR", CRITICAL: "CRIT", DEBUG: "DBG" })[r.level] || r.level)}</b> <span class="mut">${esc(r.logger.replace("src.", ""))}</span> `}${esc(r.msg)}</div>`).join("") || '<div class="mut" style="padding:10px">Sin registros (¿existe data/live/bot.log?)</div>';
+  if ($("#follow").checked && (atEnd || first)) box.scrollTop = box.scrollHeight; box.dataset.init = 1;
+}
+["logQ", "logN"].forEach(i => $("#" + i).addEventListener("input", () => { lastLogSig = ""; loadLogs(); }));
+$$(".lv").forEach(c => c.onchange = () => { lastLogSig = ""; loadLogs(); });
+$("#logCopy").onclick = () => navigator.clipboard?.writeText($$("#logbox div").map(d => d.textContent).join("\n"));
+async function loadConfig() {
+  const cfg = await api("/api/config"); state.cfg = cfg; if (!cfg) return;
+  const q = $("#cfgQ").value.toLowerCase();
+  $("#cfgWrap").innerHTML = Object.entries(cfg).map(([g, kv]) => {
+    const rows = Object.entries(kv).filter(([k, v]) => !q || k.toLowerCase().includes(q) || String(v).toLowerCase().includes(q));
+    if (!rows.length) return "";
+    return `<div class="card"><h2>${esc(g)}</h2>${table([{ h: "Parámetro", f: r => `<code>${esc(r[0])}</code>` }, { h: "Valor", f: r => `<b>${esc(typeof r[1] === "object" ? JSON.stringify(r[1]) : r[1])}</b>` }], rows)}</div>`;
+  }).join("") || '<div class="empty">Sin coincidencias</div>';
+}
+$("#cfgQ").addEventListener("input", loadConfig);
+function renderGuide() {
+  $("#guide").innerHTML = `<h2>Guía rápida</h2>
+  <h3>¿Qué estoy viendo?</h3>
+  <p>Cada vez que cierra una vela, el bot recorre un <b>pipeline</b> de 6 etapas (pestaña Resumen). El color de cada caja indica su estado: <span class="pos">verde = bien</span>, <span style="color:var(--warn)">ámbar = atención</span>, <span class="neg">rojo = problema</span>, gris = sin datos. Pulsa una caja para leer qué hace, en qué archivo vive y ver sus datos crudos.</p>
+  <h3>Si el bot no opera, mira en este orden</h3>
+  <ol><li><b>Alertas</b> de la parte superior del Resumen (diagnóstico automático).</li><li><b>Cadena de decisión de riesgo</b>: ¿qué regla recortó el pedido? (p. ej. <i>Tope Kelly</i> es normal con pocas operaciones).</li><li><b>Circuit breaker</b> y <b>Drift</b> (pestañas Riesgo y Modelo): pueden pausar entradas.</li><li><b>Logs</b>: filtra por Errores/Avisos.</li><li><b>Configuración</b>: confirma los valores efectivos.</li></ol>
+  <h3>Kill-switch</h3><p>El botón <b>⛔ HALT</b> crea <code>data/live/HALT</code>. En ≤ 30 s el bot cierra todo a mercado, cancela stops y se detiene. Para reanudar: quita HALT y reinicia <code>main.py</code>. El panel solo escucha en tu máquina (127.0.0.1).</p>
+  <h3>Atajos de teclado</h3><p><kbd>1</kbd>…<kbd>8</kbd> cambia de pestaña · <kbd>←</kbd><kbd>→</kbd> navega pestañas · <kbd>R</kbd> actualiza · <kbd>T</kbd> tema · <kbd>Esc</kbd> cierra paneles.</p>
+  <h3>Glosario</h3><ul><li><b>Exposición</b>: fracción del equity invertida (0.5 = 50 %). Negativa = corto.</li><li><b>Drawdown</b>: caída desde el máximo de equity.</li><li><b>Kelly</b>: tamaño óptimo según tus operaciones pasadas (se usa una fracción).</li><li><b>VaR/CVaR</b>: pérdida esperada en el peor 5 % de los casos al horizonte.</li><li><b>TWAP</b>: ejecución repartida en el tiempo para reducir impacto.</li><li><b>Drift</b>: cambio de régimen del mercado respecto al entrenamiento.</li><li><b>Paper / Testnet / Live</b>: simulado / dinero ficticio de Binance / dinero real.</li></ul>`;
+}
+
+/* ───────────────────────── navegación y ciclo ───────────────────────── */
+const TABS = [["resumen", "Resumen", loadResumen], ["operaciones", "Operaciones", loadOperaciones], ["riesgo", "Riesgo", loadRiesgo], ["modelo", "Modelo y drift", loadModelo], ["sentimiento", "Sentimiento", loadSent], ["logs", "Logs", loadLogs], ["config", "Configuración", loadConfig], ["guia", "Guía", async () => { if (!state.loaded.guia) { renderGuide(); state.loaded.guia = 1; } }]];
+$("#tabs").innerHTML = TABS.map(([id, label], i) => `<button role="tab" id="tab-${id}" aria-controls="t-${id}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}" data-id="${id}">${i + 1} · ${label}</button>`).join("");
+function setTab(id, focus = false) {
+  state.tab = id; history.replaceState(null, "", "#" + id);
+  TABS.forEach(([t]) => { const b = $("#tab-" + t), on = t === id; b.setAttribute("aria-selected", on); b.tabIndex = on ? 0 : -1; $("#t-" + t).hidden = !on; if (on && focus) b.focus(); });
+  tick();
+}
+$$("#tabs button").forEach(b => b.onclick = () => setTab(b.dataset.id));
+$("#tabs").addEventListener("keydown", e => {
+  const ids = TABS.map(t => t[0]), i = ids.indexOf(state.tab);
+  if (e.key === "ArrowRight") setTab(ids[(i + 1) % ids.length], true); else if (e.key === "ArrowLeft") setTab(ids[(i + ids.length - 1) % ids.length], true);
+});
+async function loadOverview() {
+  const ov = await api(`/api/overview?symbol=${encodeURIComponent(state.symbol || "")}`);
+  if (!ov) { $("#healthBadge").className = "badge bad"; $("#healthBadge").textContent = "Sin conexión con el panel"; return false; }
+  state.ov = ov; return true;
+}
+let busy = false;
+async function tick() {
+  if (busy) return; busy = true;
+  try { if (await loadOverview()) { const t = TABS.find(x => x[0] === state.tab); await t[2](); } } catch (e) { console.error(e); } finally { busy = false; }
+}
+setInterval(() => { if (state.auto && !document.hidden) tick(); }, 5000);
+$("#auto").onchange = e => state.auto = e.target.checked;
+$("#refreshBtn").onclick = tick;
+$("#utc").onchange = e => { state.utc = e.target.checked; tick(); };
+$("#symSel").onchange = e => { state.symbol = e.target.value; tick(); };
+function setTheme(t) { document.documentElement.dataset.theme = t; localStorage.setItem("dashTheme", t); $$(".chart").forEach(draw); }
+$("#themeBtn").onclick = () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+setTheme(localStorage.getItem("dashTheme") || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+document.addEventListener("keydown", e => {
+  if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) { if (e.key === "Escape") e.target.blur(); return; }
+  if (e.key === "Escape") { closeDrawer(); closeModal(); }
+  else if (/^[1-8]$/.test(e.key)) setTab(TABS[+e.key - 1][0], true);
+  else if (e.key.toLowerCase() === "r") tick(); else if (e.key.toLowerCase() === "t") $("#themeBtn").click();
+});
+
+/* ───────────────────────── kill-switch ───────────────────────── */
+function openModal() { $("#mConfirm").value = ""; $("#mErr").textContent = ""; $("#mTokenWrap").hidden = !state.meta.token_required; $("#modal").classList.add("open"); $("#mConfirm").focus(); }
+function closeModal() { $("#modal").classList.remove("open"); }
+async function postHalt(on) {
+  const h = { "Content-Type": "application/json", "X-Dashboard": "1" }; if (state.token) h["X-Dashboard-Token"] = state.token;
+  const r = await fetch("/api/halt", { method: "POST", headers: h, body: JSON.stringify({ on }) });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.status);
+}
+async function postApproval(proposalId, approve) {
+  if (state.meta.token_required && !state.token) {
+    const token = prompt("Token del panel:");
+    if (token == null) throw new Error("Aprobación cancelada.");
+    state.token = token;
+    sessionStorage.setItem("dashToken", token);
+  }
+  const h = { "Content-Type": "application/json", "X-Dashboard": "1" }; if (state.token) h["X-Dashboard-Token"] = state.token;
+  const r = await fetch("/api/approval", {
+    method: "POST", headers: h,
+    body: JSON.stringify({ proposal_id: proposalId, approve }),
+  });
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || r.status);
+}
+$("#haltBtn").onclick = () => state.meta.control === false ? alert("Controles deshabilitados en este panel") : openModal();
+$("#mCancel").onclick = closeModal;
+$("#mOk").onclick = async () => {
+  if ($("#mConfirm").value.trim() !== "HALT") { $("#mErr").textContent = "Escribe HALT exactamente para confirmar."; return; }
+  if (state.meta.token_required) { state.token = $("#mToken").value; sessionStorage.setItem("dashToken", state.token); }
+  try { await postHalt(true); closeModal(); tick(); } catch (e) { $("#mErr").textContent = "No se pudo activar: " + e.message; }
+};
+$("#haltClear").onclick = async () => { try { await postHalt(false); tick(); } catch (e) { alert("No se pudo quitar HALT: " + e.message); } };
+
+/* ───────────────────────── arranque ───────────────────────── */
+(async () => {
+  const meta = await api("/api/meta"); if (meta) state.meta = meta;
+  const h = location.hash.slice(1); setTab(TABS.some(t => t[0] === h) ? h : "resumen");
+})();
+</script>
+</body>
+</html>
